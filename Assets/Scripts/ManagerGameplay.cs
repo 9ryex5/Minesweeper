@@ -17,6 +17,10 @@ public class ManagerGameplay : MonoBehaviour
 
     private Cell[,] board;
 
+    private float timer;
+
+    private bool isPlaying;
+
     private struct Cell
     {
         public bool mined;
@@ -28,21 +32,28 @@ public class ManagerGameplay : MonoBehaviour
     {
         DrawBoard();
         SpawnMines();
+        isPlaying = true;
     }
 
     private void Update()
     {
+        if (!isPlaying) return;
+
+        timer += Time.deltaTime;
+        ManagerUI.MUI.UpdateTimer(timer);
+
         if (Input.GetMouseButtonDown(0))
         {
             int cellX = Mathf.RoundToInt(myCamera.ScreenToWorldPoint(Input.mousePosition).x);
             int cellY = Mathf.RoundToInt(myCamera.ScreenToWorldPoint(Input.mousePosition).y);
 
-            if (IsCellBoard(new Vector2Int(cellX, cellY)))
+            if (IsCellBoard(new Vector2Int(cellX, cellY)) && !board[cellX, cellY].flagged)
             {
                 if (board[cellX, cellY].mined)
                 {
                     SpawnIcon("Mine", spriteMine, new Vector2Int(cellX, cellY), parentMines);
                     ManagerUI.MUI.Endgame(false);
+                    isPlaying = false;
                 }
                 else
                 {
@@ -91,6 +102,8 @@ public class ManagerGameplay : MonoBehaviour
             Destroy(parentKnown.GetChild(i).gameObject);
 
         SpawnMines();
+        timer = 0;
+        isPlaying = true;
     }
 
     private void DrawBoard()
@@ -165,6 +178,7 @@ public class ManagerGameplay : MonoBehaviour
             if (!board[(int)parentFlags.GetChild(i).transform.position.x, (int)parentFlags.GetChild(i).transform.position.y].mined) return;
 
         ManagerUI.MUI.Endgame(true);
+        isPlaying = false;
     }
 
     private bool IsCellBoard(Vector2Int _cell)
